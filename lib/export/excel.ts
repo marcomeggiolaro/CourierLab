@@ -79,22 +79,27 @@ export async function exportToExcel(
 
   // ── Righe dati ──────────────────────────────────────────────────────────
   for (let i = 0; i < rows.length; i++) {
-    const geo = geocodingResults[i];  // stesso indice perché processiamo tutto
+    const geo = geocodingResults[i];
     const originalCells = rows[i].map(cellToExcelValue);
 
     const lat  = geo?.lat ?? null;
     const lng  = geo?.lng ?? null;
     const dist = geo?.distanceKm;
 
+    const latVal  = lat  !== null ? parseFloat(lat.toFixed(6))   : 'NO GPS';
+    const lngVal  = lng  !== null ? parseFloat(lng.toFixed(6))   : 'NO GPS';
+    const distVal = dist !== undefined ? parseFloat(dist.toFixed(3)) : 'NO GPS';
+    const statoVal = geo?.status ?? 'NO GPS';
+
     const dataRow = sheet.addRow([
       ...originalCells,
-      lat  !== null ? parseFloat(lat.toFixed(6))  : '',
-      lng  !== null ? parseFloat(lng.toFixed(6))  : '',
-      dist !== undefined ? parseFloat(dist.toFixed(3)) : '',
-      geo?.status ?? '',
+      latVal,
+      lngVal,
+      distVal,
+      statoVal,
     ]);
 
-    // Colore di sfondo in base alla distanza
+    // ── Colore sfondo righe originali in base alla distanza ─────────────
     let bgColor: string;
     if (dist === undefined || geo?.status === 'failed' || geo?.status === 'skipped') {
       bgColor = COLOR_NO_GEOCODE;
@@ -104,22 +109,35 @@ export async function exportToExcel(
       bgColor = COLOR_UNDER_400M;
     }
 
-    dataRow.eachCell({ includeEmpty: true }, (cell) => {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: bgColor },
-      };
+    // Applica sfondo alle colonne originali
+    for (let c = 1; c <= originalCells.length; c++) {
+      const cell = dataRow.getCell(c);
       cell.font = { size: 10 };
       cell.alignment = { vertical: 'middle' };
-    });
+    }
 
-    // Formato numerico per lat/lng/distanza (le ultime 3 colonne extra)
-    const lastCol = headers.length + 1;
-    [lastCol, lastCol + 1, lastCol + 2].forEach((col) => {
-      const cell = dataRow.getCell(col);
-      if (typeof cell.value === 'number') {
-        cell.numFmt = col < lastCol + 2 ? '0.000000' : '0.000';
+    // ── Stile colonne extra (Lat, Lng, Distanza, Stato) ─────────────────
+    const extraStart = originalCells.length + 1;
+    const extraValues = [latVal, lngVal, distVal, statoVal];
+    const numFmts    = ['0.000000', '0.000000', '0.000', '@'];
+
+    extraValues.forEach((val, idx) => {
+      const cell = dataRow.getCell(extraStart + idx);
+      const isDistanzaCol = idx === 2; // solo la colonna Distanza riceve colore
+
+      if (val === 'NO GPS') {
+        // Sfondo bianco, testo rosso grassetto, centrato
+        cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+        cell.font  = { size: 10, bold: true, color: { argb: 'FFCC0000' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      } else {
+        // Colore sfondo solo sulla colonna Distanza
+        if (isDistanzaCol) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+        }
+        cell.font  = { size: 10 };
+        cell.alignment = { vertical: 'middle', horizontal: 'right' };
+        if (typeof val === 'number') cell.numFmt = numFmts[idx];
       }
     });
   }
