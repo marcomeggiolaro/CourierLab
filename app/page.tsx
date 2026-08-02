@@ -211,8 +211,7 @@ export default function DashboardPage() {
   const [geocodingResults, setGeocodingResults] = useState<GeocodingRowResult[]>([]);
   const geocodingStopRef = useRef<boolean>(false);
 
-  // Selezione manuale indirizzi
-  const [manualSelection, setManualSelection] = useState(false);
+  // Selezione automatica indirizzi ambigui
   const [pendingSelection, setPendingSelection] = useState<{
     rowIndex: number;
     address: string;
@@ -308,76 +307,76 @@ export default function DashboardPage() {
       let error: string | undefined;
 
       try {
-        // ── Modalità selezione manuale ────────────────────────────────────
-        if (manualSelection) {
-          const candResp = await fetch('/api/geocode', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address, candidates: true }),
-          });
-          const candData = (await candResp.json()) as {
-            candidates?: GeocodingCandidate[];
-            error?: string;
-          };
+        // ── Step 1: chiedi candidati a Nominatim ────────────────────────
+        const candResp = await fetch('/api/geocode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, candidates: true }),
+        });
+        const candData = (await candResp.json()) as {
+          candidates?: GeocodingCandidate[];
+          error?: string;
+        };
+        const candidates = candData.candidates ?? [];
 
-          const candidates = candData.candidates ?? [];
-
-          if (candidates.length > 0) {
-            let chosenIdx = 0;
-            if (candidates.length > 1) {
-              // Mostra popup e attendi la scelta dell'utente
-              chosenIdx = await new Promise<number>((resolve) => {
-                selectionResolverRef.current = resolve;
-                setPendingSelection({ rowIndex: i + 1, address: fullAddress, candidates });
-              });
-              setPendingSelection(null);
-            }
-            const chosen = candidates[chosenIdx];
-            lat = chosen.coordinates.lat;
-            lng = chosen.coordinates.lng;
-            status = 'success';
-          } else {
-            status = 'failed';
-            error = 'Nessun risultato trovato';
-          }
-        } else {
-          // ── Modalità automatica (comportamento originale) ───────────────
+        if (candidates.length === 0) {
+          // Nessun candidato: usa la modalità fallback (tentativo 2 e 3)
           const response = await fetch('/api/geocode', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ address }),
           });
-
-          const data = (await response.json()) as {
-            result: GeocodingResult | null;
-            error?: string;
-          };
-
+          const data = (await response.json()) as { result: GeocodingResult | null; error?: string };
           if (!response.ok) {
             error = data.error ?? `HTTP ${response.status}`;
-            status = 'failed';
           } else if (data.result) {
             lat = data.result.coordinates?.lat ?? null;
             lng = data.result.coordinates?.lng ?? null;
             status = data.result.status;
             error = data.result.error;
           } else {
-            status = 'failed';
             error = 'Nessun risultato trovato';
           }
+        } else if (candidates.length === 1 || candidates[0].confidence === 'high') {
+          // Un solo risultato o alta confidenza: usa automaticamente
+          lat = candidates[0].coordinates.lat;
+          lng = candidates[0].coordinates.lng;
+          status = 'success';
+        } else {
+          // ── Più candidati con confidenza media/bassa: mostra popup ─────
+          const chosenIdx = await new Promise<number>((resolve) => {
+            selectionResolverRef.current = resolve;
+            setPendingSelection({ rowIndex: i + 1, address: fullAddress, candidates });
+          });
+          setPendingSelection(null);
+          const chosen = candidates[chosenIdx];
+          lat = chosen.coordinates.lat;
+          lng = chosen.coordinates.lng;
+          status = 'success';
         }
       } catch (err) {
         status = 'failed';
         error = err instanceof Error ? err.message : 'Errore di rete';
       }
 
-      accumulated.push({ rowIndex: i + 1, fullAddress, lat, lng, status, error,
-        distanceKm: (() => {
-          if (lat === null || lng === null) return undefined;
-          const sparo = extractSparoCoords(row, tableData.headers, detectedColumns);
-          if (sparo.lat === null || sparo.lng === null) return undefined;
-          return haversineDistance(sparo.lat, sparo.lng, lat, lng);
-        })(),
+      const sparo = extractSparoCoords(row, tableData.headers, detectedColumns);
+      const hasGeocode = lat !== null && lng !== null;
+      const hasSparo = sparo.lat !== null && sparo.lng !== null;
+      accumulated.push({
+        rowIndex: i + 1,
+        fullAddress,
+        lat,
+        lng,
+        status,
+        error,
+        distanceKm: hasGeocode && hasSparo
+          ? haversineDistance(sparo.lat!, sparo.lng!, lat!, lng!)
+          : undefined,
+        distanceNote: !hasGeocode
+          ? 'no_geocode'
+          : !hasSparo
+            ? 'no_sparo'
+            : undefined,
       });
       // Aggiorno lo stato con una copia per garantire re-render
       setGeocodingResults(accumulated.slice());
@@ -567,25 +566,6 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Toggle selezione manuale */}
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <div
-                    onClick={() => setManualSelection((v) => !v)}
-                    className={`relative w-9 h-5 rounded-full transition-colors ${
-                      manualSelection ? 'bg-indigo-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        manualSelection ? 'translate-x-4' : 'translate-x-0'
-                      }`}
-                    />
-                  </div>
-                  <span className="text-xs text-gray-600 font-medium whitespace-nowrap">
-                    Selezione manuale
-                  </span>
-                </label>
-
                 <button
                   disabled={!canGeocode || geocodingPhase === 'running'}
                   onClick={handleGeocode}

@@ -25,6 +25,8 @@ export interface GeocodingRowResult {
   error?: string;
   /** Distanza in km tra l'indirizzo geocodificato e il punto SPARO/Palmare */
   distanceKm?: number;
+  /** Motivo per cui la distanza non è calcolabile (anche se il geocoding è riuscito) */
+  distanceNote?: 'no_sparo' | 'no_geocode';
 }
 
 interface GeocodeResultsProps {
@@ -224,6 +226,14 @@ export default function GeocodeResults({
                       {r.distanceKm !== undefined ? (
                         <span className="font-semibold text-blue-700">
                           {r.distanceKm.toFixed(2)}
+                        </span>
+                      ) : r.distanceNote === 'no_sparo' ? (
+                        <span className="text-amber-600 text-[10px] font-medium whitespace-nowrap">
+                          ⚠ Manca coord. sparo
+                        </span>
+                      ) : r.distanceNote === 'no_geocode' ? (
+                        <span className="text-red-400 text-[10px] font-medium whitespace-nowrap">
+                          ⚠ Manca coord. destinatario
                         </span>
                       ) : (
                         <span className="text-gray-300">—</span>
