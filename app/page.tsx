@@ -42,7 +42,6 @@ import {
 } from '@/lib/parser/column-detector';
 import { buildSearchQuery } from '@/lib/geocoding/utils';
 import type { GeocodingAddress, GeocodingResult, GeocodingCandidate } from '@/lib/geocoding/types';
-import { haversineDistance } from '@/lib/utils/distance';
 import { exportToExcel } from '@/lib/export/excel';
 import { formatNumber } from '@/lib/utils/format';
 
@@ -362,6 +361,29 @@ export default function DashboardPage() {
       const sparo = extractSparoCoords(row, tableData.headers, detectedColumns);
       const hasGeocode = lat !== null && lng !== null;
       const hasSparo = sparo.lat !== null && sparo.lng !== null;
+
+      // ── Distanza stradale via OSRM ─────────────────────────────────────
+      let distanceKm: number | undefined;
+      if (hasGeocode && hasSparo) {
+        try {
+          const routeResp = await fetch('/api/route-distance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: { lat: sparo.lat, lng: sparo.lng },
+              to:   { lat, lng },
+            }),
+          });
+          const routeData = (await routeResp.json()) as {
+            result: { distanceKm: number } | null;
+            error?: string;
+          };
+          distanceKm = routeData.result?.distanceKm;
+        } catch {
+          // fallback silenzioso: la cella mostrerà il warning appropriato
+        }
+      }
+
       accumulated.push({
         rowIndex: i + 1,
         fullAddress,
@@ -369,9 +391,7 @@ export default function DashboardPage() {
         lng,
         status,
         error,
-        distanceKm: hasGeocode && hasSparo
-          ? haversineDistance(sparo.lat!, sparo.lng!, lat!, lng!)
-          : undefined,
+        distanceKm,
         distanceNote: !hasGeocode
           ? 'no_geocode'
           : !hasSparo

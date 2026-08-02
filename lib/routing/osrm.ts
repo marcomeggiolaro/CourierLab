@@ -1,12 +1,10 @@
 /**
  * CourierLab — OSRM Routing Service
  *
- * Calcola distanze e tempi di percorrenza su strada tramite OSRM.
+ * Calcola distanze stradali tramite OSRM (Open Source Routing Machine).
  * Endpoint pubblico: https://router.project-osrm.org
  *
  * @see http://project-osrm.org/docs/v5.5.1/api/
- *
- * ─── TODO: Implementare nella Milestone 4 ────────────────────────────────────
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -21,8 +19,6 @@ export interface RouteResult {
   distanceKm: number;
   /** Durata stimata in minuti */
   durationMinutes: number;
-  /** Geometria del percorso (GeoJSON, se richiesta) */
-  geometry?: string;
 }
 
 export interface RoutingOptions {
@@ -32,31 +28,58 @@ export interface RoutingOptions {
   profile?: 'driving' | 'cycling' | 'walking';
 }
 
-// ─── Stubs ────────────────────────────────────────────────────────────────────
+// ─── Tipi risposta OSRM ───────────────────────────────────────────────────────
 
-/**
- * Calcola il percorso stradale tra due punti.
- * Restituisce null se il percorso non è calcolabile.
- */
-export async function calculateRoute(
-  _from: Coordinates,
-  _to: Coordinates,
-  _options?: RoutingOptions,
-): Promise<RouteResult | null> {
-  throw new Error(
-    'Routing non ancora implementato — disponibile nella Milestone 4.',
-  );
+interface OsrmRoute {
+  distance: number;   // metri
+  duration: number;   // secondi
 }
 
+interface OsrmResponse {
+  code: string;
+  routes?: OsrmRoute[];
+}
+
+// ─── Implementazione ──────────────────────────────────────────────────────────
+
+const DEFAULT_ENDPOINT = 'https://router.project-osrm.org';
+const DEFAULT_PROFILE  = 'driving';
+
 /**
- * Calcola la matrice distanze tra N origini e M destinazioni.
+ * Calcola il percorso stradale tra due punti tramite OSRM.
+ * Restituisce null se OSRM non trova un percorso.
+ *
+ * @throws Error in caso di errore HTTP o di rete.
  */
-export async function calculateDistanceMatrix(
-  _origins: Coordinates[],
-  _destinations: Coordinates[],
-  _options?: RoutingOptions,
-): Promise<(RouteResult | null)[][]> {
-  throw new Error(
-    'Distance matrix non ancora implementata — disponibile nella Milestone 4.',
-  );
+export async function calculateRoute(
+  from: Coordinates,
+  to: Coordinates,
+  options?: RoutingOptions,
+): Promise<RouteResult | null> {
+  const endpoint = options?.endpoint ?? DEFAULT_ENDPOINT;
+  const profile  = options?.profile  ?? DEFAULT_PROFILE;
+
+  // OSRM vuole le coordinate in formato lng,lat (longitudine prima)
+  const coords = `${from.lng},${from.lat};${to.lng},${to.lat}`;
+  const url = `${endpoint}/route/v1/${profile}/${coords}?overview=false`;
+
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'CourierLab/1.0 (courier-route-planner)' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`OSRM HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as OsrmResponse;
+
+  if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+    return null;
+  }
+
+  const route = data.routes[0];
+  return {
+    distanceKm:      route.distance / 1000,
+    durationMinutes: route.duration / 60,
+  };
 }
