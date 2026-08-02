@@ -26,7 +26,7 @@ export default function Header() {
               CourierLab
             </p>
             <p className="text-[10px] text-gray-400 mt-0.5">
-              Pianificazione giri corrieri
+              Calcolo distanze tra sparo spedizione e indirizzo destinatario
             </p>
           </div>
         </div>

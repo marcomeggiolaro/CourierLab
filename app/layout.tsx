@@ -6,9 +6,9 @@ import Header from '@/components/layout/Header';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CourierLab — Pianificazione giri corrieri',
+  title: 'CourierLab — Calcolo distanze sparo/destinatario',
   description:
-    'Geocodifica indirizzi, calcola distanze stradali e ottimizza i giri dei corrieri.',
+    'Calcolo distanze tra sparo spedizione e indirizzo destinatario tramite OpenStreetMap.',
 };
 
 export default function RootLayout({
