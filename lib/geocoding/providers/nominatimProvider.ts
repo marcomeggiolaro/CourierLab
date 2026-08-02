@@ -33,7 +33,7 @@
  */
 
 import type { IGeocodingProvider } from './IGeocodingProvider';
-import type { GeocodingAddress, GeocodingResult, GeocodingConfidence } from '../types';
+import type { GeocodingAddress, GeocodingResult, GeocodingConfidence, GeocodingCandidate } from '../types';
 import { buildSearchQuery } from '../utils';
 
 // ─── Nominatim response type ─────────────────────────────────────────────────
@@ -145,6 +145,47 @@ export class NominatimProvider implements IGeocodingProvider {
       fromCache: false,
       provider: this.name,
     };
+  }
+
+  /**
+   * Restituisce fino a `limit` candidati per un indirizzo.
+   * Usato dal popup di selezione manuale.
+   */
+  async geocodeCandidates(address: GeocodingAddress, limit = 5): Promise<GeocodingCandidate[]> {
+    const query = buildSearchQuery(address);
+
+    const url = new URL(`${this.config.baseUrl}/search`);
+    url.searchParams.set('q', query);
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('countrycodes', this.config.countryCode);
+    url.searchParams.set('addressdetails', '0');
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'User-Agent': this.config.userAgent,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Nominatim HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json() as NominatimSearchResult[];
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .map((item) => {
+        const lat = parseFloat(item.lat);
+        const lng = parseFloat(item.lon);
+        if (isNaN(lat) || isNaN(lng)) return null;
+        const importance = item.importance ?? 0;
+        const confidence: GeocodingConfidence =
+          importance >= 0.7 ? 'high' : importance >= 0.4 ? 'medium' : 'low';
+        return { displayName: item.display_name, coordinates: { lat, lng }, confidence };
+      })
+      .filter((c): c is GeocodingCandidate => c !== null);
   }
 
   /**

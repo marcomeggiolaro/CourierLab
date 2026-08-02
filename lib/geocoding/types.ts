@@ -53,6 +53,16 @@ export type GeocodingConfidence = 'high' | 'medium' | 'low';
  */
 export type GeocodingStatus = 'success' | 'cached' | 'failed' | 'skipped';
 
+/**
+ * Candidato restituito da una ricerca multi-risultato.
+ * Usato dal popup di selezione manuale dell'indirizzo.
+ */
+export interface GeocodingCandidate {
+  displayName: string;
+  coordinates: Coordinates;
+  confidence: GeocodingConfidence;
+}
+
 /** Risultato completo di una singola operazione di geocoding. */
 export interface GeocodingResult {
   /** Indirizzo originale fornito in input. */

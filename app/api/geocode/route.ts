@@ -19,6 +19,8 @@ const provider = new NominatimProvider();
 
 interface RequestBody {
   address: GeocodingAddress;
+  /** Se true, restituisce fino a 5 candidati invece del singolo risultato migliore */
+  candidates?: boolean;
 }
 
 // Ritardo minimo tra chiamate Nominatim (policy: 1 req/s)
@@ -58,6 +60,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const addr = body.address;
   const cleaned: GeocodingAddress = { ...addr, street: cleanStreet(addr.street) };
+
+  // ── Modalità candidates: restituisce più opzioni per la selezione manuale ───
+  if (body.candidates) {
+    try {
+      const candidates = await provider.geocodeCandidates(cleaned, 5);
+      return NextResponse.json({ candidates });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Errore provider';
+      return NextResponse.json({ error: msg }, { status: 502 });
+    }
+  }
 
   // ── Tentativo 1: indirizzo completo (pulito) ─────────────────────────────
   try {
