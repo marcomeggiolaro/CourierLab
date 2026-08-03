@@ -4,40 +4,39 @@
  * Header sticky con logo, nome applicazione e tagline.
  * Componente server-side (nessun interattività richiesta).
  */
-import { Package } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Header() {
   return (
-    <header
-      className="border-b bg-white sticky top-0 z-50"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-sm shadow-sm">
+      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm"
-            style={{ background: 'var(--primary)' }}
-          >
-            <Package className="w-4 h-4" />
-          </div>
+          <Image
+            src="/icon.png"
+            alt="CourierLab"
+            width={40}
+            height={40}
+            className="rounded-xl shadow-sm"
+            priority
+          />
           <div className="leading-none">
-            <p className="font-bold text-sm tracking-tight text-gray-900">
+            <p className="font-bold text-base tracking-tight text-gray-900">
               CourierLab
             </p>
-            <p className="text-[10px] text-gray-400 mt-0.5">
-              Calcolo distanze tra sparo spedizione e indirizzo destinatario
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Calcolo distanze sparo / destinatario
             </p>
           </div>
         </div>
 
         {/* Info tecnologie */}
         <div className="hidden sm:flex items-center gap-2 text-[11px] text-gray-400">
-          <span className="px-2 py-1 rounded bg-gray-50 border border-gray-100 font-mono">
+          <span className="px-2.5 py-1 rounded-md bg-gray-50 border border-gray-100 font-mono font-medium">
             OpenStreetMap
           </span>
           <span className="text-gray-300">·</span>
-          <span className="px-2 py-1 rounded bg-gray-50 border border-gray-100 font-mono">
+          <span className="px-2.5 py-1 rounded-md bg-gray-50 border border-gray-100 font-mono font-medium">
             OSRM
           </span>
         </div>
