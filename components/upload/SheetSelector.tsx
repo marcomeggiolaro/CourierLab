@@ -62,14 +62,24 @@ export default function SheetSelector({
           </div>
 
           {/* Messaggio contestuale */}
-          {!isAutoDetected && (
+          {isAutoDetected ? (
             <p className="text-xs text-gray-500 mt-1.5">
               Il foglio{' '}
               <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">
                 {DEFAULT_SHEET_NAME}
               </span>{' '}
-              non è stato trovato. Seleziona il foglio che contiene i dati da
-              elaborare.
+              è stato selezionato automaticamente. Se il file contiene più fogli,
+              puoi sceglierne un altro dal menù a tendina sottostante.
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-1.5">
+              Il foglio{' '}
+              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">
+                {DEFAULT_SHEET_NAME}
+              </span>{' '}
+              non è stato trovato. Seleziona dal menù a tendina il foglio che
+              contiene i dati da elaborare. Se è presente un solo foglio, verrà
+              considerato automaticamente.
             </p>
           )}
 
