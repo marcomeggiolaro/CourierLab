@@ -128,9 +128,9 @@ export class NominatimProvider implements IGeocodingProvider {
 
     const first = data[0];
 
-    // Scarta risultati troppo generici (quartiere, città, provincia…):
-    // place_rank < 25 indica che Nominatim ha trovato solo un'area, non una via/civico.
-    if ((first.place_rank ?? 0) < 25) {
+    // Scarta risultati troppo generici: place_rank < 22 = villaggio/città/provincia.
+    // Accetta frazioni/locality (22), quartieri (24), vie (26–28), civici (30).
+    if ((first.place_rank ?? 0) < 22) {
       return null;
     }
 
@@ -187,7 +187,7 @@ export class NominatimProvider implements IGeocodingProvider {
     return data
       .map((item) => {
         // Stessa soglia di place_rank applicata a geocode(): scarta risultati generici
-        if ((item.place_rank ?? 0) < 25) return null;
+        if ((item.place_rank ?? 0) < 22) return null;
         const lat = parseFloat(item.lat);
         const lng = parseFloat(item.lon);
         if (isNaN(lat) || isNaN(lng)) return null;
