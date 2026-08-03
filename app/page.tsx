@@ -424,7 +424,7 @@ export default function DashboardPage() {
       tableData.headers,
       tableData.rows,
       geocodingResults,
-      'CourierLab_risultati',
+      'KmC_risultati',
     );
   }, [tableData, geocodingResults]);
 

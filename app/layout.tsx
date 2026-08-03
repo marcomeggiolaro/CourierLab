@@ -9,9 +9,9 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'CourierLab — Calcolo distanze sparo/destinatario',
+  title: 'KmC — Distance Check',
   description:
-    'Calcolo distanze tra sparo spedizione e indirizzo destinatario tramite OpenStreetMap.',
+    'Distance Check: calcolo distanze tra punto di sparo e indirizzo destinatario tramite OpenStreetMap.',
   icons: {
     icon: '/icon.png',
     apple: '/icon.png',

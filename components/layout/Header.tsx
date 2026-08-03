@@ -22,10 +22,10 @@ export default function Header() {
           />
           <div className="leading-none">
             <p className="font-bold text-base tracking-tight text-gray-900">
-              CourierLab
+              KmC
             </p>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Calcolo distanze sparo / destinatario
+              Distance Check
             </p>
           </div>
         </div>

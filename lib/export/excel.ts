@@ -36,7 +36,7 @@ export async function exportToExcel(
   headers: string[],
   rows: CellValue[][],
   geocodingResults: GeocodingRowResult[],
-  fileName: string = 'CourierLab_risultati',
+  fileName: string = 'KmC_risultati',
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'CourierLab';
