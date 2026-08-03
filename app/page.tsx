@@ -118,6 +118,45 @@ function extractSparoCoords(
   return { lat: getNum('sparoLat'), lng: getNum('sparoLng') };
 }
 
+// ─── Fetch con retry automatico ──────────────────────────────────────────────
+
+/**
+ * Esegue una fetch con retry automatico su errori di rete, 5xx e 429.
+ * - 429 (rate limit): backoff esponenziale partendo da 5 s
+ * - 5xx / errore rete: backoff esponenziale partendo da baseDelayMs
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3,
+  baseDelayMs = 2000,
+): Promise<Response> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const resp = await fetch(url, options);
+      if (resp.status === 429) {
+        if (attempt < maxRetries) {
+          await new Promise<void>((r) => setTimeout(r, 5000 * (attempt + 1)));
+          continue;
+        }
+        return resp;
+      }
+      if (resp.status >= 500 && attempt < maxRetries) {
+        await new Promise<void>((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
+        continue;
+      }
+      return resp;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error('Errore di rete');
+      if (attempt < maxRetries) {
+        await new Promise<void>((r) => setTimeout(r, baseDelayMs * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError ?? new Error('Richiesta fallita dopo più tentativi');
+}
+
 // ─── Step builder ─────────────────────────────────────────────────────────────
 
 function buildWorkflowSteps(
@@ -307,11 +346,11 @@ export default function DashboardPage() {
 
       try {
         // ── Step 1: chiedi candidati a Nominatim ────────────────────────
-        const candResp = await fetch('/api/geocode', {
+        const candResp = await fetchWithRetry('/api/geocode', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ address, candidates: true }),
-        });
+        }, 3, 2000);
         const candData = (await candResp.json()) as {
           candidates?: GeocodingCandidate[];
           error?: string;
@@ -320,11 +359,11 @@ export default function DashboardPage() {
 
         if (candidates.length === 0) {
           // Nessun candidato: usa la modalità fallback (tentativo 2 e 3)
-          const response = await fetch('/api/geocode', {
+          const response = await fetchWithRetry('/api/geocode', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ address }),
-          });
+          }, 3, 2000);
           const data = (await response.json()) as { result: GeocodingResult | null; error?: string };
           if (!response.ok) {
             error = data.error ?? `HTTP ${response.status}`;
@@ -366,21 +405,21 @@ export default function DashboardPage() {
       let distanceKm: number | undefined;
       if (hasGeocode && hasSparo) {
         try {
-          const routeResp = await fetch('/api/route-distance', {
+          const routeResp = await fetchWithRetry('/api/route-distance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               from: { lat: sparo.lat, lng: sparo.lng },
               to:   { lat, lng },
             }),
-          });
+          }, 3, 1000);
           const routeData = (await routeResp.json()) as {
             result: { distanceKm: number } | null;
             error?: string;
           };
           distanceKm = routeData.result?.distanceKm;
         } catch {
-          // fallback silenzioso: la cella mostrerà il warning appropriato
+          // fallback silenzioso dopo i retry: la cella mostrerà il warning appropriato
         }
       }
 
