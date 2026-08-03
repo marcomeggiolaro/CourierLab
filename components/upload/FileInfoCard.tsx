@@ -4,7 +4,7 @@
  * Mostra i metadati del file Excel caricato:
  * nome, dimensione, data/ora caricamento, numero di fogli.
  */
-import { FileSpreadsheet, Clock, HardDrive, Layers, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, Clock, HardDrive, Layers, CheckCircle2, RotateCcw } from 'lucide-react';
 import { formatFileSize, formatDateTime } from '@/lib/utils/format';
 import type { FileInfo } from '@/lib/excel/reader';
 
@@ -71,14 +71,15 @@ export default function FileInfoCard({ fileInfo, onReset }: FileInfoCardProps) {
         </div>
       </div>
 
-      {/* Pulsante reset */}
+      {/* Pulsante reset — ben visibile */}
       {onReset && (
         <button
           onClick={onReset}
-          className="text-xs text-gray-400 hover:text-gray-700 transition-colors flex-shrink-0 mt-0.5 underline underline-offset-2"
-          title="Carica un altro file"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors flex-shrink-0 text-sm font-semibold"
+          title="Azzera tutto e carica un nuovo file"
         >
-          Cambia
+          <RotateCcw className="w-4 h-4" />
+          Azzera tutto
         </button>
       )}
     </div>
