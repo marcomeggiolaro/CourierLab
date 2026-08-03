@@ -29,6 +29,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 17px;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -68,11 +72,11 @@ body::after {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url('/icon.png');
+  background-image: url('/bg-log.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
-  opacity: 0.13;
+  opacity: 0.22;
   pointer-events: none;
   z-index: 0;
 }

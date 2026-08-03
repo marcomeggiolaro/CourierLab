@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="it" className={inter.variable}>
       <body>
         <Header />
-        <main className="relative z-10 max-w-5xl mx-auto px-6 py-8">{children}</main>
+        <main className="relative z-10 max-w-7xl mx-auto px-8 py-8">{children}</main>
       </body>
     </html>
   );
