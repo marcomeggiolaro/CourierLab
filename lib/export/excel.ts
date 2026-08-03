@@ -52,6 +52,7 @@ export async function exportToExcel(
     'Lng (geocodificata)',
     'Distanza SPARO (km)',
     'Stato geocoding',
+    'Link Percorso Maps',
   ];
 
   const headerRow = sheet.addRow([...headers, ...extraHeaders]);
@@ -75,6 +76,7 @@ export async function exportToExcel(
     { width: 18 }, // Lng
     { width: 20 }, // Distanza
     { width: 18 }, // Stato
+    { width: 28 }, // Link Maps
   ];
 
   // ── Righe dati ──────────────────────────────────────────────────────────
@@ -85,6 +87,8 @@ export async function exportToExcel(
     const lat  = geo?.lat ?? null;
     const lng  = geo?.lng ?? null;
     const dist = geo?.distanceKm;
+    const sparoLat = geo?.sparoLat ?? null;
+    const sparoLng = geo?.sparoLng ?? null;
 
     const latVal  = lat  !== null ? parseFloat(lat.toFixed(6))   : 'NO GPS';
     const lngVal  = lng  !== null ? parseFloat(lng.toFixed(6))   : 'NO GPS';
@@ -97,6 +101,7 @@ export async function exportToExcel(
       lngVal,
       distVal,
       statoVal,
+      '',  // Link Maps — impostato sotto come hyperlink
     ]);
 
     // ── Colore sfondo righe originali in base alla distanza ─────────────
@@ -140,6 +145,22 @@ export async function exportToExcel(
         if (typeof val === 'number') cell.numFmt = numFmts[idx];
       }
     });
+
+    // ── Colonna Link Percorso Maps ───────────────────────────────────────
+    const mapsCell = dataRow.getCell(extraStart + 4);
+    if (lat !== null && lng !== null) {
+      const mapsUrl =
+        sparoLat !== null && sparoLng !== null
+          ? `https://www.google.com/maps/dir/${sparoLat},${sparoLng}/${lat},${lng}`
+          : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      mapsCell.value = { text: 'Vedi percorso', hyperlink: mapsUrl };
+      mapsCell.font  = { size: 10, color: { argb: 'FF2563EB' }, underline: true };
+      mapsCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    } else {
+      mapsCell.value = '—';
+      mapsCell.font  = { size: 10, color: { argb: 'FFAAAAAA' } };
+      mapsCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    }
   }
 
   // ── Legenda ─────────────────────────────────────────────────────────────
@@ -183,7 +204,15 @@ function cellToExcelValue(
   return String(v);
 }
 
-/** Link Google Maps per coordinate date */
+/** Link Google Maps — pin destinazione */
 export function buildGoogleMapsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+/** Link Google Maps — percorso da SPARO a destinazione */
+export function buildGoogleMapsRouteUrl(
+  sparoLat: number, sparoLng: number,
+  destLat: number, destLng: number,
+): string {
+  return `https://www.google.com/maps/dir/${sparoLat},${sparoLng}/${destLat},${destLng}`;
 }

@@ -397,6 +397,8 @@ export default function DashboardPage() {
           : !hasSparo
             ? 'no_sparo'
             : undefined,
+        sparoLat: sparo.lat,
+        sparoLng: sparo.lng,
       });
       // Aggiorno lo stato con una copia per garantire re-render
       setGeocodingResults(accumulated.slice());

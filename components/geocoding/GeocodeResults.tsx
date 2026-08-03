@@ -27,6 +27,9 @@ export interface GeocodingRowResult {
   distanceKm?: number;
   /** Motivo per cui la distanza non è calcolabile (anche se il geocoding è riuscito) */
   distanceNote?: 'no_sparo' | 'no_geocode';
+  /** Coordinate del punto SPARO/Palmare per costruire il link Maps */
+  sparoLat?: number | null;
+  sparoLng?: number | null;
 }
 
 interface GeocodeResultsProps {
