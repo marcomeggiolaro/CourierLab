@@ -3,12 +3,12 @@
  *
  * Proxy server-side per Nominatim con:
  * 1. Pulizia indirizzo (rimozione "SNC", virgole ridondanti)
- * 2. Strategia di fallback progressivo per massimizzare le corrispondenze:
+ * 2. Strategia di fallback progressivo (rispetta policy Nominatim: 1 req/s):
  *    Tentativo 1 → indirizzo completo ripulito
- *    Tentativo 2 → senza numero civico
- *    Tentativo 3 → solo CAP + comune
+ *    Tentativo 2 → senza numero civico (se presente)
  *
- * Il delay di 1,1s tra i tentativi rispetta la policy di Nominatim (1 req/s).
+ * Il fallback "solo CAP + comune" è stato rimosso: restituisce coordinate di
+ * città non utilizzabili per il calcolo distanze (place_rank < 25).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -87,20 +87,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const result = await provider.geocode({ ...cleaned, streetNumber: undefined });
       if (result !== null) return NextResponse.json({ result });
-    } catch { /* ignora, prova fallback successivo */ }
-  }
-
-  // ── Tentativo 3: solo CAP + comune ───────────────────────────────────────
-  if (cleaned.postalCode || cleaned.city) {
-    await sleep(1100);
-    try {
-      const result = await provider.geocode({
-        postalCode: cleaned.postalCode,
-        city: cleaned.city,
-        country: cleaned.country ?? 'Italy',
-      });
-      if (result !== null) return NextResponse.json({ result });
-    } catch { /* fallback esaurito */ }
+    } catch { /* ignora, nessun risultato */ }
   }
 
   return NextResponse.json({ result: null });

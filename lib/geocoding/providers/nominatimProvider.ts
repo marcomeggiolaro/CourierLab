@@ -43,6 +43,8 @@ interface NominatimSearchResult {
   lon: string;
   display_name: string;
   importance: number;
+  /** Precisione del risultato: 30 = edificio, 28 = via, 26 = località, <25 = quartiere/città */
+  place_rank?: number;
 }
 
 // ─── Configurazione ───────────────────────────────────────────────────────────
@@ -125,6 +127,13 @@ export class NominatimProvider implements IGeocodingProvider {
     }
 
     const first = data[0];
+
+    // Scarta risultati troppo generici (quartiere, città, provincia…):
+    // place_rank < 25 indica che Nominatim ha trovato solo un'area, non una via/civico.
+    if ((first.place_rank ?? 0) < 25) {
+      return null;
+    }
+
     const lat = parseFloat(first.lat);
     const lng = parseFloat(first.lon);
 
@@ -177,6 +186,8 @@ export class NominatimProvider implements IGeocodingProvider {
 
     return data
       .map((item) => {
+        // Stessa soglia di place_rank applicata a geocode(): scarta risultati generici
+        if ((item.place_rank ?? 0) < 25) return null;
         const lat = parseFloat(item.lat);
         const lng = parseFloat(item.lon);
         if (isNaN(lat) || isNaN(lng)) return null;

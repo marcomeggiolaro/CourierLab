@@ -1,15 +1,6 @@
 'use client';
-/**
- * GeocodeResults — Mostra la barra di avanzamento e la tabella dei risultati
- * durante e dopo il geocoding degli indirizzi.
- *
- * Struttura della tabella:
- *   # | Indirizzo | Latitudine | Longitudine | Stato | Errore
- *
- * Le righe fallite sono evidenziate in rosso.
- */
 
-import { Download } from 'lucide-react';
+import { Download, CheckCircle2, XCircle, SkipForward, ListChecks } from 'lucide-react';
 import type { GeocodingStatus } from '@/lib/geocoding/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,32 +50,33 @@ export default function GeocodeResults({
   ).length;
   const failedCount = results.filter((r) => r.status === 'failed').length;
   const skippedCount = results.filter((r) => r.status === 'skipped').length;
+  const successRate = total > 0 ? Math.round((successCount / total) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4">
       {/* ── Barra di avanzamento ─────────────────────────────────────── */}
       {phase === 'running' && (
         <div
-          className="rounded-xl border bg-white p-5"
+          className="rounded-xl border bg-white p-6"
           style={{ borderColor: 'var(--border)' }}
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-semibold text-gray-800">
+              <p className="text-base font-semibold text-gray-800">
                 Geocoding in corso…
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-sm text-gray-400 mt-0.5">
                 Rispetta la policy Nominatim: 1 richiesta / secondo
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-mono text-gray-600 tabular-nums">
+            <div className="flex items-center gap-5">
+              <span className="text-lg font-mono font-semibold text-gray-700 tabular-nums">
                 {completed} / {total}
               </span>
               {onStop && (
                 <button
                   onClick={onStop}
-                  className="text-xs text-red-600 hover:text-red-800 font-medium underline underline-offset-2"
+                  className="text-sm text-red-600 hover:text-red-800 font-medium underline underline-offset-2"
                 >
                   Interrompi
                 </button>
@@ -93,7 +85,7 @@ export default function GeocodeResults({
           </div>
 
           {/* Progress bar */}
-          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
@@ -103,62 +95,34 @@ export default function GeocodeResults({
             />
           </div>
 
-          <p className="text-xs text-gray-400 mt-2 text-right">{progress}%</p>
+          <p className="text-sm font-semibold text-gray-500 mt-2.5 text-right tabular-nums">
+            {progress}%
+          </p>
         </div>
       )}
 
-      {/* ── Tabella risultati ─────────────────────────────────────────── */}
-      {results.length > 0 && (
+      {/* ── Riepilogo risultati ───────────────────────────────────────── */}
+      {phase === 'done' && results.length > 0 && (
         <div
           className="rounded-xl border bg-white overflow-hidden"
           style={{ borderColor: 'var(--border)' }}
         >
-          {/* Toolbar */}
+          {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-3.5 border-b"
+            className="flex items-center justify-between px-7 py-5 border-b"
             style={{ borderColor: 'var(--border)' }}
           >
             <div>
-              <p className="text-sm font-semibold text-gray-800">
-                Risultati Geocoding
+              <p className="text-lg font-bold text-gray-800">Riepilogo Geocoding</p>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Elaborazione completata · tasso di successo{' '}
+                <span className="font-semibold text-gray-700">{successRate}%</span>
               </p>
-              {phase === 'done' && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  <span className="text-green-600 font-medium">
-                    {successCount} trovati
-                  </span>
-                  {failedCount > 0 && (
-                    <>
-                      {' '}
-                      ·{' '}
-                      <span className="text-red-600 font-medium">
-                        {failedCount} non trovati
-                      </span>
-                    </>
-                  )}
-                  {skippedCount > 0 && (
-                    <>
-                      {' '}
-                      ·{' '}
-                      <span className="text-yellow-600 font-medium">
-                        {skippedCount} saltati
-                      </span>
-                    </>
-                  )}
-                </p>
-              )}
             </div>
-
-            {phase === 'done' && failedCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
-                ⚠ {failedCount} indirizzi non geocodificati
-              </span>
-            )}
-
-            {phase === 'done' && onExport && (
+            {onExport && (
               <button
                 onClick={onExport}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
                 style={{ background: 'var(--primary)' }}
               >
                 <Download className="w-4 h-4" />
@@ -167,122 +131,68 @@ export default function GeocodeResults({
             )}
           </div>
 
-          {/* Tabella */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr
-                  className="border-b text-gray-400 uppercase text-[10px] tracking-wide bg-gray-50"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  <th className="px-4 py-2.5 text-left font-semibold w-10">
-                    #
-                  </th>
-                  <th className="px-4 py-2.5 text-left font-semibold">
-                    Indirizzo
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-semibold w-28">
-                    Latitudine
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-semibold w-28">
-                    Longitudine
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-semibold w-28">
-                    Distanza (km)
-                  </th>
-                  <th className="px-4 py-2.5 text-center font-semibold w-24">
-                    Stato
-                  </th>
-                  <th className="px-4 py-2.5 text-left font-semibold">
-                    Errore
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((r) => (
-                  <tr
-                    key={r.rowIndex}
-                    className={
-                      r.status === 'failed'
-                        ? 'bg-red-50 border-l-2 border-red-300'
-                        : r.status === 'skipped'
-                          ? 'bg-yellow-50'
-                          : 'even:bg-gray-50/50'
-                    }
-                  >
-                    <td className="px-4 py-2 text-gray-400 tabular-nums">
-                      {r.rowIndex}
-                    </td>
-                    <td
-                      className="px-4 py-2 text-gray-700 max-w-xs truncate"
-                      title={r.fullAddress}
-                    >
-                      {r.fullAddress || '—'}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 tabular-nums">
-                      {r.lat !== null ? r.lat.toFixed(6) : '—'}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 tabular-nums">
-                      {r.lng !== null ? r.lng.toFixed(6) : '—'}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">
-                      {r.distanceKm !== undefined ? (
-                        <span className="font-semibold text-blue-700">
-                          {r.distanceKm.toFixed(2)}
-                        </span>
-                      ) : r.distanceNote === 'no_sparo' ? (
-                        <span className="text-amber-600 text-[10px] font-medium whitespace-nowrap">
-                          ⚠ Manca coord. sparo
-                        </span>
-                      ) : r.distanceNote === 'no_geocode' ? (
-                        <span className="text-red-400 text-[10px] font-medium whitespace-nowrap">
-                          ⚠ Manca coord. destinatario
-                        </span>
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      <StatusBadge status={r.status} />
-                    </td>
-                    <td
-                      className="px-4 py-2 text-red-600 max-w-xs truncate"
-                      title={r.error}
-                    >
-                      {r.error ?? ''}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Stat cards */}
+          <div className="grid grid-cols-4 divide-x" style={{ borderColor: 'var(--border)' }}>
+            <StatCard
+              icon={<ListChecks className="w-6 h-6 text-gray-400" />}
+              label="Totale indirizzi"
+              value={total}
+              valueClass="text-gray-800"
+            />
+            <StatCard
+              icon={<CheckCircle2 className="w-6 h-6 text-green-500" />}
+              label="Geocodificati"
+              value={successCount}
+              valueClass="text-green-600"
+            />
+            <StatCard
+              icon={<XCircle className="w-6 h-6 text-red-500" />}
+              label="Non trovati"
+              value={failedCount}
+              valueClass={failedCount > 0 ? 'text-red-600' : 'text-gray-400'}
+            />
+            <StatCard
+              icon={<SkipForward className="w-6 h-6 text-yellow-500" />}
+              label="Saltati"
+              value={skippedCount}
+              valueClass={skippedCount > 0 ? 'text-yellow-600' : 'text-gray-400'}
+            />
           </div>
+
+          {/* Warning banner se ci sono fallimenti */}
+          {failedCount > 0 && (
+            <div className="mx-7 my-5 flex items-center gap-3 px-5 py-4 rounded-lg bg-red-50 border border-red-200">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700">
+                <span className="font-semibold">{failedCount} indirizzi</span> non sono stati
+                geocodificati. Verranno esportati senza coordinate.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ─── Badge stato ─────────────────────────────────────────────────────────────
+// ─── Stat card ────────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: GeocodingStatus }) {
-  if (status === 'success' || status === 'cached') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">
-        ✓ OK
-      </span>
-    );
-  }
-  if (status === 'failed') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-semibold">
-        ✗ Errore
-      </span>
-    );
-  }
-  // skipped
+function StatCard({
+  icon,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  valueClass: string;
+}) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-[10px] font-semibold">
-      — Skip
-    </span>
+    <div className="flex flex-col items-center justify-center gap-2 px-6 py-8">
+      {icon}
+      <span className={`text-4xl font-bold tabular-nums ${valueClass}`}>{value}</span>
+      <span className="text-sm text-gray-500 font-medium text-center">{label}</span>
+    </div>
   );
 }

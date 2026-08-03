@@ -6,8 +6,8 @@
  * per stili e colori celle in formato .xlsx).
  *
  * Regola di evidenziazione:
- *   Distanza > 400 m  →  sfondo rosso chiaro (#FFCCCC)
- *   Distanza ≤ 400 m  →  sfondo verde chiaro (#CCFFCC)
+ *   Distanza > 250 m  →  sfondo rosso chiaro (#FFCCCC)
+ *   Distanza ≤ 250 m  →  sfondo verde chiaro (#CCFFCC)
  *   Non geocodificato  →  sfondo arancione chiaro (#FFE5CC)
  */
 import ExcelJS from 'exceljs';
@@ -16,11 +16,11 @@ import type { GeocodingRowResult } from '@/components/geocoding/GeocodeResults';
 
 // ─── Colori ───────────────────────────────────────────────────────────────────
 
-const COLOR_OVER_400M   = 'FFFFCCCC'; // rosso chiaro   — distanza > 400 m
-const COLOR_UNDER_400M  = 'FFCCFFCC'; // verde chiaro   — distanza ≤ 400 m
+const COLOR_OVER_250M   = 'FFFFCCCC'; // rosso chiaro   — distanza > 250 m
+const COLOR_UNDER_250M  = 'FFCCFFCC'; // verde chiaro   — distanza ≤ 250 m
 const COLOR_NO_GEOCODE  = 'FFFFE5CC'; // arancione      — non geocodificato
 const COLOR_HEADER      = 'FF2563EB'; // blu primario   — intestazioni
-const DISTANCE_THRESHOLD_KM = 0.4;   // 400 metri
+const DISTANCE_THRESHOLD_KM = 0.25;  // 250 metri
 
 // ─── Funzione principale ──────────────────────────────────────────────────────
 
@@ -114,9 +114,9 @@ export async function exportToExcel(
     if (dist === undefined || geo?.status === 'failed' || geo?.status === 'skipped') {
       bgColor = COLOR_NO_GEOCODE;
     } else if (dist > DISTANCE_THRESHOLD_KM) {
-      bgColor = COLOR_OVER_400M;
+      bgColor = COLOR_OVER_250M;
     } else {
-      bgColor = COLOR_UNDER_400M;
+      bgColor = COLOR_UNDER_250M;
     }
 
     // Applica sfondo alle colonne originali
@@ -172,8 +172,8 @@ export async function exportToExcel(
   const legendSheet = workbook.addWorksheet('Legenda');
   legendSheet.addRow(['Colore', 'Significato']);
   const legend = [
-    [COLOR_OVER_400M,  'Distanza > 400 m dal punto SPARO/Palmare'],
-    [COLOR_UNDER_400M, 'Distanza ≤ 400 m dal punto SPARO/Palmare'],
+    [COLOR_OVER_250M,  'Distanza > 250 m dal punto SPARO/Palmare'],
+    [COLOR_UNDER_250M, 'Distanza ≤ 250 m dal punto SPARO/Palmare'],
     [COLOR_NO_GEOCODE, 'Indirizzo non geocodificato'],
   ];
   legend.forEach(([color, label]) => {
