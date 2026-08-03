@@ -64,16 +64,15 @@ body {
 body::after {
   content: '';
   position: fixed;
-  bottom: -4%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 52vmin;
-  height: 52vmin;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background-image: url('/icon.png');
-  background-size: contain;
+  background-size: 70vmin;
   background-repeat: no-repeat;
-  background-position: center bottom;
-  opacity: 0.055;
+  background-position: center center;
+  opacity: 0.13;
   pointer-events: none;
   z-index: 0;
 }
