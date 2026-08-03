@@ -249,6 +249,9 @@ export default function DashboardPage() {
   const [geocodingResults, setGeocodingResults] = useState<GeocodingRowResult[]>([]);
   const geocodingStopRef = useRef<boolean>(false);
 
+  // Modal completamento elaborazione
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+
   // Selezione automatica indirizzi ambigui
   const [pendingSelection, setPendingSelection] = useState<{
     rowIndex: number;
@@ -451,6 +454,7 @@ export default function DashboardPage() {
     }
 
     setGeocodingPhase('done');
+    setShowCompletionModal(true);
   }, [tableData, detectedColumns]);
 
   const handleGeocodingStop = useCallback(() => {
@@ -645,6 +649,41 @@ export default function DashboardPage() {
           )}
         </div>
       )}
+      {/* Modal completamento elaborazione */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          {/* Card */}
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-900">Elaborazione completata!</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {geocodingResults.filter(r => r.status === 'success' || r.status === 'cached').length} indirizzi trovati
+                {geocodingResults.filter(r => r.status === 'failed').length > 0 && (
+                  <span className="text-red-500">
+                    {' '}· {geocodingResults.filter(r => r.status === 'failed').length} non trovati
+                  </span>
+                )}
+                {' '}su {geocodingResults.length} totali
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCompletionModal(false)}
+              className="mt-2 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: 'var(--primary)' }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Popup selezione manuale indirizzo */}
       {pendingSelection && (
         <AddressSelectionModal
