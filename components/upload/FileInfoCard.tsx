@@ -1,36 +1,20 @@
 /**
  * CourierLab — File Info Card
- *
- * Mostra i metadati del file Excel caricato:
- * nome, dimensione, data/ora caricamento, numero di fogli.
  */
-import { FileSpreadsheet, Clock, HardDrive, Layers, CheckCircle2, RotateCcw } from 'lucide-react';
+import { FileSpreadsheet, Clock, HardDrive, Layers, CheckCircle2 } from 'lucide-react';
 import { formatFileSize, formatDateTime } from '@/lib/utils/format';
 import type { FileInfo } from '@/lib/excel/reader';
 
 interface FileInfoCardProps {
   fileInfo: FileInfo;
-  /** Callback per caricare un altro file */
   onReset?: () => void;
 }
 
-export default function FileInfoCard({ fileInfo, onReset }: FileInfoCardProps) {
+export default function FileInfoCard({ fileInfo }: FileInfoCardProps) {
   const stats = [
-    {
-      icon: HardDrive,
-      label: 'Dimensione',
-      value: formatFileSize(fileInfo.size),
-    },
-    {
-      icon: Clock,
-      label: 'Caricato il',
-      value: formatDateTime(fileInfo.uploadedAt),
-    },
-    {
-      icon: Layers,
-      label: fileInfo.sheetCount === 1 ? 'Foglio' : 'Fogli',
-      value: String(fileInfo.sheetCount),
-    },
+    { icon: HardDrive, label: 'Dimensione', value: formatFileSize(fileInfo.size) },
+    { icon: Clock,     label: 'Caricato il', value: formatDateTime(fileInfo.uploadedAt) },
+    { icon: Layers,    label: fileInfo.sheetCount === 1 ? 'Foglio' : 'Fogli', value: String(fileInfo.sheetCount) },
   ] as const;
 
   return (
@@ -45,12 +29,9 @@ export default function FileInfoCard({ fileInfo, onReset }: FileInfoCardProps) {
 
       {/* Dettagli */}
       <div className="flex-1 min-w-0">
-        {/* Nome file + badge status */}
+        {/* Nome file + badge */}
         <div className="flex items-start justify-between gap-3">
-          <p
-            className="font-semibold text-sm text-gray-900 truncate"
-            title={fileInfo.name}
-          >
+          <p className="font-semibold text-sm text-gray-900 truncate" title={fileInfo.name}>
             {fileInfo.name}
           </p>
           <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium flex-shrink-0">
@@ -70,18 +51,6 @@ export default function FileInfoCard({ fileInfo, onReset }: FileInfoCardProps) {
           ))}
         </div>
       </div>
-
-      {/* Pulsante reset — ben visibile */}
-      {onReset && (
-        <button
-          onClick={onReset}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors flex-shrink-0 text-sm font-semibold"
-          title="Azzera tutto e carica un nuovo file"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Azzera tutto
-        </button>
-      )}
     </div>
   );
 }

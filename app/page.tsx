@@ -491,10 +491,27 @@ export default function DashboardPage() {
 
       {/* ① Step Indicator - sticky sotto l'header */}
       <div
-        className="rounded-xl border bg-white p-6 sticky top-14 z-10 shadow-sm"
+        className="rounded-xl border bg-white px-6 py-4 sticky top-14 z-10 shadow-sm flex items-center gap-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        <StepIndicator steps={workflowSteps} />
+        <div className="flex-1">
+          <StepIndicator steps={workflowSteps} />
+        </div>
+
+        {/* Pulsante Azzera tutto — visibile solo quando c'è un file caricato */}
+        {phase === 'loaded' && (
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors flex-shrink-0 text-sm font-semibold whitespace-nowrap"
+            title="Azzera tutto e carica un nuovo file"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            Azzera tutto
+          </button>
+        )}
       </div>
 
       {/* ② Upload phase ──────────────────────────────────────────── */}
