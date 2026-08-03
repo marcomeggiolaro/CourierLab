@@ -90,10 +90,15 @@ export async function exportToExcel(
     const sparoLat = geo?.sparoLat ?? null;
     const sparoLng = geo?.sparoLng ?? null;
 
-    const latVal  = lat  !== null ? parseFloat(lat.toFixed(6))   : 'NO GPS';
-    const lngVal  = lng  !== null ? parseFloat(lng.toFixed(6))   : 'NO GPS';
-    const distVal = dist !== undefined ? parseFloat(dist.toFixed(3)) : 'NO GPS';
-    const statoVal = geo?.status ?? 'NO GPS';
+    const latVal  = lat  !== null ? parseFloat(lat.toFixed(6))   : 'NO LAT/LONG IND.';
+    const lngVal  = lng  !== null ? parseFloat(lng.toFixed(6))   : 'NO LAT/LONG IND.';
+    const distNote = geo?.distanceNote;
+    const distVal = dist !== undefined
+      ? parseFloat(dist.toFixed(3))
+      : distNote === 'no_sparo'
+        ? 'NO SPARO'
+        : 'NO LAT/LONG IND.';
+    const statoVal = geo?.status ?? 'n/d';
 
     const dataRow = sheet.addRow([
       ...originalCells,
@@ -130,7 +135,7 @@ export async function exportToExcel(
       const cell = dataRow.getCell(extraStart + idx);
       const isDistanzaCol = idx === 2; // solo la colonna Distanza riceve colore
 
-      if (val === 'NO GPS') {
+      if (val === 'NO GPS' || val === 'NO SPARO' || val === 'NO LAT/LONG IND.') {
         // Sfondo bianco, testo rosso grassetto, centrato
         cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
         cell.font  = { size: 10, bold: true, color: { argb: 'FFCC0000' } };
